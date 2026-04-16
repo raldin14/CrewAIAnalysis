@@ -1,19 +1,21 @@
-from crewai.tools import BaseTool
-from typing import Type
-from pydantic import BaseModel, Field
+import requests
+from crewai.tools import tool
 
+MCP = "http://localhost:3001/tools"
 
-class MyCustomToolInput(BaseModel):
-    """Input schema for MyCustomTool."""
-    argument: str = Field(..., description="Description of the argument.")
+@tool("Inspect Source AST")
+def ast_tool(file_path: str) -> dict:
+    """Reads a JS/TS source file and extracts routes, field references, and exports."""
+    return requests.post(f"{MCP}/inspect_source_ast", json={"filePath": file_path}).json()
 
-class MyCustomTool(BaseTool):
-    name: str = "Name of my tool"
-    description: str = (
-        "Clear description for what this tool is useful for, your agent will need this information to use it."
-    )
-    args_schema: Type[BaseModel] = MyCustomToolInput
+@tool("Database Introspector")
+def db_tool(compare_with: str) -> dict:
+    """Samples MongoDB and compares actual fields against an OpenAPI spec."""
+    return requests.post(f"{MCP}/database_introspector", json={"compareWith": compare_with}).json()
 
-    def _run(self, argument: str) -> str:
-        # Implementation goes here
-        return "this is an example of a tool output, ignore it and move along."
+@tool("Schema Diff Engine")
+def diff_tool(baseline_path: str, head_path: str) -> dict:
+    """Diffs two OpenAPI spec files and reports breaking changes."""
+    return requests.post(f"{MCP}/schema_diff_engine",
+                         json={"baselinePath": baseline_path, "headPath": head_path}).json()
+
