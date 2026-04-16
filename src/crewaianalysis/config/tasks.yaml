@@ -1,17 +1,30 @@
-research_task:
+discovery_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
-  expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    Analyze the target app for breaking changes.
+    1. Inspect the file: ../target-app/frontend/src/api/userApi.js
+    2. Run the database introspector comparing against: ../target-app/openapi.yaml
+    3. Summarize what field the DB has, what the spec says, and what the frontend uses.
+  expected_output: A summary of all field name inconsistencies found.
+  agent: archaeologist
 
-reporting_task:
+planning_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
-  expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    Based on the Archaeologist's findings:
+    1. Run the dependency graph mapper on targetPath=../target-app/frontend/src focusOn=userApi.js
+    2. Run the rename-field codemod on ../target-app/frontend/src to rename from user_name to username
+    3. Note that openapi.yaml also needs its user_name field updated to username
+  expected_output: A list of files modified and confirmation that codemods ran successfully.
+  agent: architect
+  context:
+    - discovery_task
+
+validation_task:
+  description: >
+    Validate the fixes:
+    1. Run the contract test runner on ../target-app/openapi.yaml
+    2. Report whether the spec now correctly references username instead of user_name
+    3. Give a final health score: PASS or FAIL
+  expected_output: Test results with a final PASS or FAIL verdict.
+  agent: qa_lead
+  context:
+    - planning_task
