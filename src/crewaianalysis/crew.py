@@ -1,64 +1,45 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-from crewai.agents.agent_builder.base_agent import BaseAgent
-from typing import List
-# If you want to run a snippet of code before or after the crew starts,
-# you can use the @before_kickoff and @after_kickoff decorators
-# https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
+from crewaianalysis.tools.custom_tool import ast_tool, db_tool, diff_tool, transform_tool, dep_tool, test_tool
+
 
 @CrewBase
 class Crewaianalysis():
-    """Crewaianalysis crew"""
-
-    agents: List[BaseAgent]
-    tasks: List[Task]
-
-    # Learn more about YAML configuration files here:
-    # Agents: https://docs.crewai.com/concepts/agents#yaml-configuration-recommended
-    # Tasks: https://docs.crewai.com/concepts/tasks#yaml-configuration-recommended
-    
-    # If you would like to add tools to your agents, you can learn more about it here:
-    # https://docs.crewai.com/concepts/agents#agent-tools
-    @agent
-    def researcher(self) -> Agent:
-        return Agent(
-            config=self.agents_config['researcher'], # type: ignore[index]
-            verbose=True
-        )
+    agents_config = 'config/agents.yaml'
+    tasks_config  = 'config/tasks.yaml'
 
     @agent
-    def reporting_analyst(self) -> Agent:
-        return Agent(
-            config=self.agents_config['reporting_analyst'], # type: ignore[index]
-            verbose=True
-        )
+    def archaeologist(self) -> Agent:
+        return Agent(config=self.agents_config['archaeologist'],
+                     tools=[ast_tool, db_tool], verbose=True)
 
-    # To learn more about structured task outputs,
-    # task dependencies, and task callbacks, check out the documentation:
-    # https://docs.crewai.com/concepts/tasks#overview-of-a-task
-    @task
-    def research_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['research_task'], # type: ignore[index]
-        )
+    @agent
+    def architect(self) -> Agent:
+        return Agent(config=self.agents_config['architect'],
+                     tools=[diff_tool, transform_tool, dep_tool], verbose=True)
+
+    @agent
+    def qa_lead(self) -> Agent:
+        return Agent(config=self.agents_config['qa_lead'],
+                     tools=[test_tool], verbose=True)
 
     @task
-    def reporting_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['reporting_task'], # type: ignore[index]
-            output_file='report.md'
-        )
+    def discovery_task(self) -> Task:
+        return Task(config=self.tasks_config['discovery_task'])
+
+    @task
+    def planning_task(self) -> Task:
+        return Task(config=self.tasks_config['planning_task'])
+
+    @task
+    def validation_task(self) -> Task:
+        return Task(config=self.tasks_config['validation_task'])
 
     @crew
     def crew(self) -> Crew:
-        """Creates the Crewaianalysis crew"""
-        # To learn how to add knowledge sources to your crew, check out the documentation:
-        # https://docs.crewai.com/concepts/knowledge#what-is-knowledge
-
         return Crew(
-            agents=self.agents, # Automatically created by the @agent decorator
-            tasks=self.tasks, # Automatically created by the @task decorator
+            agents=self.agents,
+            tasks=self.tasks,
             process=Process.sequential,
-            verbose=True,
-            # process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
+            verbose=True
         )

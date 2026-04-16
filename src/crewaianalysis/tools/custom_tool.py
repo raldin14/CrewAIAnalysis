@@ -1,3 +1,26 @@
+import requests
+from crewai.tools import tool
+
+MCP = "http://localhost:3000"  
+
+@tool("AST Analyzer")
+def ast_tool(target_path: str) -> dict:
+    """Analyzes the AST of source files to find inconsistencies."""
+    return requests.post(f"{MCP}/ast_analyzer",
+                         json={"targetPath": target_path}).json()
+
+@tool("Database Schema Inspector")
+def db_tool(db_connection: str) -> dict:
+    """Inspects the database schema for field definitions."""
+    return requests.post(f"{MCP}/db_inspector",
+                         json={"dbConnection": db_connection}).json()
+
+@tool("Diff Generator")
+def diff_tool(from_path: str, to_path: str) -> dict:
+    """Generates diffs between two versions of files."""
+    return requests.post(f"{MCP}/diff_generator",
+                         json={"fromPath": from_path, "toPath": to_path}).json()
+
 @tool("Code Transformer")
 def transform_tool(codemod: str, target_path: str, from_field: str, to_field: str) -> dict:
     """Runs a named codemod to rename fields across source files."""
